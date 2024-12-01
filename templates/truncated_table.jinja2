@@ -1,0 +1,34 @@
+{%- macro truncated_data_table(json_array_data) -%}
+{%- set data = [] -%}
+{%- for item in json_array_data -%}
+    {%- set processed_item = {} -%}
+    {%- for key, value in item.items() -%}
+        {%- if value is string and value|length > 30 -%}
+            {%- set processed_value = value[:27] ~ '...' -%}
+        {%- else -%}
+            {%- set processed_value = value -%}
+        {%- endif -%}
+        {%- do processed_item.update({key: processed_value}) -%}
+    {%- endfor -%}
+    {%- do data.append(processed_item) -%}
+{%- endfor -%}
+{% set headers = data[0].keys() if data else [] -%}
+{% set column_widths = {} -%}
+{% for header in headers -%}
+    {% set max_length = [header|length] -%}
+    {% for row in data -%}
+        {% set _ = max_length.append(row[header]|string|length) -%}
+    {% endfor -%}
+    {% set column_widths = column_widths.update({header: max(max_length)}) or column_widths -%}
+{% endfor -%}
++{% for header in headers %}{{ '-' * (column_widths[header] + 2) }}+{% endfor %}
+|{% for header in headers %} {{ header.center(column_widths[header]) }} |{% endfor %}
++{% for header in headers %}{{ '-' * (column_widths[header] + 2) }}+{% endfor %}
+{% for row in data -%}
+|{% for header in headers %} {{ (row[header] | string).center(column_widths[header]) }} |{% endfor %}
+{% endfor -%}
++{% for header in headers %}{{ '-' * (column_widths[header] + 2) }}+{% endfor %}
+{%- endmacro -%}
+
+{# Using the template #}
+{{ truncated_data_table(data) }}
